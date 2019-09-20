@@ -1,89 +1,104 @@
-import { Icon } from 'native-base';
-import Field from '@Components/Field';
-import { connect } from 'react-redux';
-import React, { useState } from 'react';
-import { NavigationActions } from 'react-navigation';
-import { MAIN_COLOR, ACCENT_COLOR } from '@Theme/constants';
+import React from 'react'
+import Field from '@Components/Field'
+import { connect } from 'react-redux'
+import { scale, ACCENT_COLOR } from '@Theme/constants'
 import {
-  TouchableOpacity, KeyboardAvoidingView, View, Text, Image, ImageBackground,
-} from 'react-native';
+  Text,
+  View,
+  Modal,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native'
 
-// key
+const { height } = Dimensions.get('window');
 
-const mapDispatchTopProps = (dispatch) => ({
-  redirectToRegisterPage: () => {
-    return dispatch(NavigationActions.navigate({
-      routeName: 'Register'
-    }))
+const Style = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'transparent'
+  },
+  content: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    minHeight: height * .6,
+    borderTopLeftRadius: 40,
+    backgroundColor: '#FFF',
+    borderTopRightRadius: 40,
+  },
+  title: {
+    color: '#2B2B2B',
+    fontSize: scale(26),
+    textAlign: 'center',
+    fontFamily: 'Poppins-Bold'
+  },
+  subTitle: {
+    color: '#B0B0B0',
+    textAlign: 'center',
+    fontSize: scale(16),
+    fontFamily: 'Poppins-Regular'
+  },
+  createAccount: {
+    color: '#4a9dca',
+    fontSize: scale(13),
+    fontFamily: 'Poppins-Regular'
+  },
+  createAccountContainer: {
+    paddingVertical: 5,
+    backgroundColor: 'transparent',
+  },
+  CTAContainer: {
+    borderRadius: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 60,
+    backgroundColor: ACCENT_COLOR
+  },
+  CTAText: {
+    color: '#FFF',
+    fontSize: scale(18),
+    textAlign: 'center',
+    fontFamily: 'Poopins-SemiBold'
   }
 });
 
-export default connect(null, mapDispatchTopProps)(
-  class LoginScreen extends React.Component {
-    state = {}
+/**
+ * Componente usado para mostrar el formulario de login en el componente
+ * principal de Authentification. Este componente se encarga de manejar la validación
+ * para entrar a la aplicación
+ * 
+ * @param {Object} param0 Las propiedades que recibe el componente
+ */
+const LoginModal = ({ visible, onCreateNewAccount }) => {
+  return <Modal transparent visible={visible} animationType="slide">
+    <View style={Style.container}>
+      <View style={Style.content}>
+        <Text style={Style.title}>
+          Bienvenido
+        </Text>
+        <Text style={Style.subTitle}>
+          Ingresa para continuar
+        </Text>
+        <View>
+          <Field icon="idcard" placeholder={'Email'} value={''} />
+          <Field icon="lock" placeholder={'Contraseña'} value={''} />
+          <TouchableOpacity onPress={onCreateNewAccount} style={Style.createAccountContainer}>
+            <Text style={Style.createAccount}>
+              Crear una cuenta
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <TouchableOpacity activeOpacity={.8} style={Style.CTAContainer}>
+            <Text style={Style.CTAText}>
+              LOGIN
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {/* <ModalLoader /> */}
+      </View>
+    </View>
+  </Modal>
+}
 
-    render() {
-      return <ImageBackground source={require('@Assets/images/pattern.png')} style={{ flex: 1 }}>
-        <KeyboardAvoidingView behavior="height" style={{ flex: 1 }}>
-          <View style={{ flex: 1, flexDirection: 'row', paddingHorizontal: 20 }}>
-            <Image style={{
-              flex: 1,
-              width: '100%',
-              alignSelf: 'center',
-              resizeMode: 'contain',
-            }} source={require('@Assets/images/logo.png')} />
-            <View style={{
-              justifyContent: 'center'
-            }}>
-              <Text style={{
-                fontSize: 55,
-                color: ACCENT_COLOR,
-                fontFamily: 'Poppins-Bold'
-              }}>
-                MapApp
-              </Text>
-            </View>
-          </View>
-          <View style={{ flex: 1, paddingHorizontal: 40 }}>
-            <View>
-              <Field placeholder={'Username'} />
-              <Field placeholder={'Password'} />
-            </View>
-            <View style={{
-              marginTop: 30,
-              flexDirection: 'row',
-              justifyContent: 'center',
-            }}>
-              <TouchableOpacity style={{
-                elevation: 5,
-                borderRadius: 30,
-                paddingVertical: 10,
-                paddingHorizontal: 80,
-                backgroundColor: ACCENT_COLOR,
-              }}>
-                <Text style={{
-                  color: '#FFF',
-                  textAlign: 'center',
-                  fontFamily: 'Poppins-Regular'
-                }}>
-                  Login
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={this.props.redirectToRegisterPage} style={{
-              marginTop: 30
-            }}>
-              <Text style={{
-                color: MAIN_COLOR,
-                textAlign: 'center',
-                fontFamily: 'Poppins-Regular'
-              }}>
-                ¿No tienes una cuenta aún?
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </ImageBackground>
-    }
-  }
-);
+export default connect()(LoginModal);

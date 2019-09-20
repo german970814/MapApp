@@ -1,14 +1,5 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
 import React from 'react';
-// import Loader from '@Components/Loader';
-// import Loading from '@Components/Loading';
+import { YellowBox } from 'react-native';
 import { Root as NBRoot } from 'native-base';
 import AppNavigator from './src/AppNavigator';
 import { store, persistor } from './src/store';
@@ -22,6 +13,12 @@ const AppWithNavigator = createReduxContainer(AppNavigator);
 const AppWithNavigationState = connect(
   (state) => ({ state: state.navigation })
 )(AppWithNavigator);
+
+YellowBox.ignoreWarnings([
+  'Warning: componentWillMount is deprecated',
+  'Warning: componentWillUpdate is deprecated',
+  'Warning: componentWillReceiveProps is deprecated',
+]);
 
 const Root = () => {
   return (

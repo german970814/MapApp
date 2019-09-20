@@ -19,17 +19,25 @@ export const loginUserAction = (payload) => ({
   type: constants.LOGIN_USER,
 });
 
-export const createUser = ({ name, lastName, identificationNumber, password }) => {
+export const createUser = (users, { name, lastName, identificationNumber, password }) => {
   return (dispatch) => {
     dispatch(loading(true));
-    const newUserRecord = {
-      name,
-      lastName,
-      identificationNumber,
-      password: hashPassword(password),
-    }
-    dispatch(loading(false));
-    dispatch(createUserAction(newUserRecord));
+    return new Promise((resolver, reject) => {
+      const newUserRecord = {
+        name,
+        lastName,
+        identificationNumber,
+        password: hashPassword(password),
+      }
+
+      dispatch(loading(false));  
+      if (_.find(users, { identificationNumber })) {
+        return reject({ code: 'USER_EXISTS' });
+      }
+
+      dispatch(createUserAction(newUserRecord));
+      return resolver({ code: 'OK' });
+    });
   }
 }
 

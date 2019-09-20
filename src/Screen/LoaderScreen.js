@@ -1,31 +1,45 @@
-import React from 'react';
-import { ACCENT_COLOR } from '@Theme/constants';
-import { View, Image, Text } from 'react-native';
-import MainContainer from '@Components/Containers/Main';
+import React from 'react'
+import { scale, ACCENT_COLOR, MAIN_COLOR } from '@Theme/constants'
+import { View, Image, Text, StyleSheet } from 'react-native'
 
 
-export default class LoaderScreen extends React.Component {
-  render() {
-    return <MainContainer showHeader={false}>
-      <View style={{ flex: 1, flexDirection: 'row', paddingHorizontal: 20 }}>
-        <Image style={{
-          flex: 1,
-          width: '100%',
-          alignSelf: 'center',
-          resizeMode: 'contain',
-        }} source={require('@Assets/images/logo.png')} />
-        <View style={{
-          justifyContent: 'center'
-        }}>
-          <Text style={{
-            fontSize: 55,
-            color: ACCENT_COLOR,
-            fontFamily: 'Poppins-Bold'
-          }}>
-            MapApp
-          </Text>
-        </View>
-      </View>
-    </MainContainer>
+const Style = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    backgroundColor: MAIN_COLOR
+  },
+  image: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'center',
+    resizeMode: 'contain',
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start'
+  },
+  title: {
+    color: ACCENT_COLOR,
+    fontSize: scale(55),
+    fontFamily: 'Poppins-Bold'
   }
-}
+});
+
+/**
+ * Esta pantalla se muestra mientras se está cargando la aplicación.
+ * Es el momento en que la aplicación está consultando los datos guardados.
+ */
+const LoaderScreen = () => (
+  <View style={Style.container}>
+    <Image style={Style.image} source={require('@Assets/images/background.png')} />
+    <View style={Style.titleContainer}>
+      <Text style={Style.title}>
+        MapApp
+      </Text>
+    </View>
+  </View>
+);
+
+export default LoaderScreen;

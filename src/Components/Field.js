@@ -1,57 +1,73 @@
-import { Icon } from 'native-base';
-import React, { useState } from 'react';
-import { View, Text, TextInput } from 'react-native';
-import { MAIN_COLOR, ACCENT_COLOR } from '@Theme/constants';
+import React from 'react'
+import { Icon } from 'native-base'
+import { scale } from '@Theme/constants'
+import { View, TextInput, StyleSheet } from 'react-native'
 
 
-const Field = ({ placeholder, icon, value, onChange }) => {
-  return <View style={{
-    marginTop: 10,
+const Style = StyleSheet.create({
+  container: {
+    marginTop: 5,
     marginBottom: 20,
     paddingVertical: 10,
     borderBottomWidth: 1,
     flexDirection: 'row',
     borderColor: '#B0B0B0',
     backgroundColor: '#FFF',
-  }}>
-    <View style={{
-      flex: .8,
-      width: '100%',
-      justifyContent: 'center',
-    }}>
-      {/* <Text style={{
-        marginLeft: 5,
-        color: '#B0B0B0',
-        fontFamily: 'Poppins-Regular'
-      }}>
-        { !value ? placeholder : '' }
-      </Text> */}
+  },
+  inputContainer: {
+    flex: .8,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  input: {
+    top: 0,
+    left: 0,
+    right: 0,
+    padding: 0,
+    color: '#B0B0B0',
+    position: 'absolute',
+    fontFamily: 'Poppins-Regular'
+  },
+  iconContainer: {
+    flex: .2,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  icon: {
+    color: '#B0B0B0',
+    fontSize: scale(23),
+  }
+});
+
+
+/**
+ * Componente para renderizar los campos con inputs dentro de la aplicación.
+ * Este componente fue creado para estandarizar los estilos de los inputs dentro
+ * de la aplicación.
+ * 
+ * @param {Object} param0 Las propiedades que recibe el componente
+ */
+const Field = ({
+  icon,
+  onChange,
+  value='',
+  placeholder,
+  ...props,
+}) => (
+  <View style={Style.container}>
+    <View style={Style.inputContainer}>
       <TextInput
+        {...props}
         value={value}
+        style={Style.input}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#B0B0B0"
-        style={{
-          left: 0,
-          right: 0,
-          top: 0,
-          padding: 0,
-          color: '#B0B0B0',
-          position: 'absolute',
-          fontFamily: 'Poppins-Regular'
-        }} />
+        placeholderTextColor="#B0B0B0" />
     </View>
-    <View style={{
-      flex: .2,
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <Icon name={icon} type="AntDesign" style={{
-        fontSize: 23,
-        color: '#B0B0B0',
-      }} />
+    <View style={Style.iconContainer}>
+      <Icon name={icon} type="AntDesign" style={Style.icon} />
     </View>
   </View>
-}
+);
 
 export default Field;

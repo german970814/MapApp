@@ -1,10 +1,10 @@
 import React from 'react';
 import { YellowBox } from 'react-native';
+import AlertModal from '@Components/Alert';
 import { Root as NBRoot } from 'native-base';
 import AppNavigator from './src/AppNavigator';
 import { store, persistor } from './src/store';
 import { Provider, connect } from 'react-redux';
-import LoaderComponent from '@Components/Loader';
 import LoaderScreen from '@Screens/LoaderScreen';
 import { PersistGate } from 'redux-persist/integration/react';
 import { createReduxContainer } from 'react-navigation-redux-helpers';
@@ -26,7 +26,9 @@ const Root = () => {
       <PersistGate loading={<LoaderScreen />} persistor={persistor}>
         <NBRoot>
           <AppWithNavigationState />
-          <LoaderComponent />
+          <AlertModal ref={ref => {
+            if (ref) AlertModal.alertInstance = ref;
+          }} />
         </NBRoot>
       </PersistGate>
     </Provider>

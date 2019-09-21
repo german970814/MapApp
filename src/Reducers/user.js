@@ -6,6 +6,12 @@ const initialState = {
   loggedUser: {}
 }
 
+/**
+ * Reducer de usuarios.
+ * 
+ * @param {Object} state El estado de usuarios
+ * @param {Object} action La acción que se va a realizar
+ */
 const userReducer = (state=initialState, action) => {
   switch (action.type) {
     case constants.CREATE_USER:

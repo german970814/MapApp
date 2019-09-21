@@ -1,6 +1,6 @@
 import React from 'react'
 import { Icon } from 'native-base'
-import { scale } from '@Theme/constants'
+import { scale, ACCENT_COLOR } from '@Theme/constants'
 import { View, TextInput, StyleSheet } from 'react-native'
 
 
@@ -52,20 +52,21 @@ const Field = ({
   onChange,
   value='',
   placeholder,
+  hasError=false,
   ...props,
 }) => (
-  <View style={Style.container}>
+  <View style={[Style.container, (hasError && !value) ? { borderColor: ACCENT_COLOR } : null]}>
     <View style={Style.inputContainer}>
       <TextInput
         {...props}
         value={value}
-        style={Style.input}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#B0B0B0" />
+        placeholderTextColor={(hasError && !value) ? ACCENT_COLOR : '#B0B0B0'}
+        style={[Style.input, (hasError && !value) ? { color: ACCENT_COLOR } : null]} />
     </View>
     <View style={Style.iconContainer}>
-      <Icon name={icon} type="AntDesign" style={Style.icon} />
+      <Icon name={icon} type="AntDesign" style={[Style.icon, (hasError && !value) ? { color: ACCENT_COLOR } : null]} />
     </View>
   </View>
 );

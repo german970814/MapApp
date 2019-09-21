@@ -2,12 +2,22 @@ import _ from 'lodash'
 import { Icon } from 'native-base'
 import Field from '@Components/Field'
 import { connect } from 'react-redux'
+import Alert from '@Components/Alert'
 import React, { useState } from 'react'
 import { createUser } from '@Actions/user'
 import { scale, ACCENT_COLOR } from '@Theme/constants'
-import { Modal, View, Dimensions, StyleSheet, Text, TouchableOpacity } from 'react-native'
+import {
+  Text,
+  View,
+  Modal,
+  Keyboard,
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity
+} from 'react-native'
 
 
+// Se setea el estado inicial
 const INITIAL_STATE = {
   name: {
     placeholder: 'Nombres',
@@ -78,6 +88,15 @@ const Style = StyleSheet.create({
   }
 });
 
+/**
+ * Funcion encargada de guardar los datos cada vez que un input
+ * sufre algún cambio
+ * 
+ * @param {String} field El nombre del campo a actualizar
+ * @param {String} value El valor del campo a actualizar
+ * @param {Object} state El objeto diccionario de datos
+ * @param {Function} setState Función para setear los datos
+ */
 function onTextChange(field, value, state, setState) {
   setState({
     ...Object.assign({}, state, {
@@ -86,21 +105,56 @@ function onTextChange(field, value, state, setState) {
   });
 }
 
-function onSubmit(users, onCreateUser, state, setState) {
+/**
+ * Función que se encarga de validar el formulario, y es la encargada
+ * de enviar los datos a los reducer para ser guardados, también se encarga
+ * de los manejos de errores del formulario y del reducer.
+ * 
+ * @param {Array} users Los usuarios registrados en la app
+ * @param {Function} onCreateUser Acción para crear usuarios
+ * @param {Object} state El estado actual del componente
+ * @param {Function} setState Función para setear el estado
+ * @param {Function} onLogin Función para devolver al modal de login
+ * @param {Function} showErrors Función para setear si los errores deben ser visibles o no
+ */
+function onSubmit(users, onCreateUser, state, setState, onLogin, showErrors) {
+  Keyboard.dismiss();
   const payload = _.mapValues(state, 'value');
   const hasErrors = _.compact(_.map(_.values(payload), value => !!value)).length !== Object.keys(state).length;
 
+  showErrors(hasErrors);
   (!hasErrors && onCreateUser) && (onCreateUser(users, payload)
     .then(({ code }) => {
-      console.warn('Success', code)
+      if (code === 'OK') {
+        onLogin();
+        setState(INITIAL_STATE);
+        Alert.show({
+          duration: 3000,
+          type: 'success',
+          message: 'Se ha registrado con éxito',
+        });
+      }
     })
     .catch(({ code }) => {
-      console.warn('Error', e)
+      if (code === 'USER_EXISTS') {
+        Alert.show({
+          type: 'error',
+          duration: 3000,
+          message: 'Parece que el usuario ya existe',
+        });
+      }
     })
   )
 }
 
+/**
+ * Componente que renderiza un modal con el formulario de registro
+ * en la aplicación.
+ * 
+ * @param {Object} param0 Las propiedades del componente
+ */
 const RegisterModal = ({ visible, onLogin, onCreateUser, users }) => {
+  const [ hasErrors, showErrors ] = useState(false);
   const [ state, setState ] = useState(INITIAL_STATE);
 
   return <Modal transparent visible={visible} animationType="slide">
@@ -116,24 +170,28 @@ const RegisterModal = ({ visible, onLogin, onCreateUser, users }) => {
           <Field
             icon="user"
             { ...state.name }
+            hasError={hasErrors}
             onChange={(value) => onTextChange('name', value, state, setState)} />
           <Field
             icon="user"
             { ...state.lastName }
+            hasError={hasErrors}
             onChange={(value) => onTextChange('lastName', value, state, setState)} />
           <Field
             icon="idcard"
+            hasError={hasErrors}
             { ...state.identificationNumber }
             onChange={(value) => onTextChange('identificationNumber', value, state, setState)} />
           <Field
             icon="lock"
+            hasError={hasErrors}
             { ...state.password }
             onChange={(value) => onTextChange('password', value, state, setState)} />
         </View>
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <TouchableOpacity
             style={Style.CTAContainer}
-            onPress={() => onSubmit(users, onCreateUser, state, setState)}
+            onPress={() => onSubmit(users, onCreateUser, state, setState, onLogin, showErrors)}
           >
             <Text style={Style.CTAText}>
               REGISTRARSE
@@ -148,17 +206,29 @@ const RegisterModal = ({ visible, onLogin, onCreateUser, users }) => {
   </Modal>
 }
 
+/**
+ * Función para mapear el estado global de Redux como propiedades
+ * del componente.
+ * 
+ * @param {Object} state El estado global de Redux
+ */
 const mapStateToProps = (state) => ({
   users: state.user.data
 });
 
+/**
+ * Función para mapear acciones despachables para el store de Redux, las
+ * cuales llegan como <Props> al componente.
+ * 
+ * @param {Redux.Dispatcher} dispatch Despachador de acciones de Redux
+ */
 const mapDispatchToProps = (dispatch) => ({
   /**
    * Callback que se llama cuando el usuario presiona el CTA
    * para registrarse
    * 
    * @param {Array} users El arreglo de los usuarios registrados
-   * @param {Object} payload El objecto con los datos para crear el usuario
+   * @param {Object} payload El objeto con los datos para crear el usuario
    */
   onCreateUser: (users, payload) => {
     return dispatch(createUser(users, payload))

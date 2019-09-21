@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { scale, MAIN_COLOR } from '@Theme/constants'
+import { MAIN_COLOR } from '@Theme/constants'
 import { View, Image, Dimensions, StyleSheet } from 'react-native'
 
 import LoginModal from './Login'
@@ -24,23 +24,11 @@ const Style = StyleSheet.create({
   }
 });
 
-// const ModalLoader = () => (
-//   <View style={{
-//     top: 0,
-//     left: 0,
-//     right: 0,
-//     bottom: 0,
-//     position: 'absolute',
-//     alignItems: 'center',
-//     borderTopLeftRadius: 40,
-//     borderTopRightRadius: 40,
-//     justifyContent: 'center',
-//     backgroundColor: 'rgba(255, 255, 255, .6)',
-//   }}>
-//     <Image style={{ width: 90, height: 90 }} source={require('@Assets/images/loader.gif')} />
-//   </View>
-// );
-
+/**
+ * Componente usado para renderizar la pantalla donde
+ * se encuentra el formulario de Login y el formulario de
+ * Registro.
+ */
 const IntroScreen = () => {
   const [ isLogin, setIsLogin ] = useState(true);
 

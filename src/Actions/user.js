@@ -1,10 +1,12 @@
-import _ from 'lodash';
-import { loading } from '@Actions/tmp';
-import { checkPassword, hashPassword } from '@Utils/password';
+import _ from 'lodash'
+import { loading } from '@Actions/tmp'
+import { NavigationActions } from 'react-navigation'
+import { checkPassword, hashPassword } from '@Utils/password'
 
 const _constants = [
   'LOGIN_USER',
   'CREATE_USER',
+  'LOGOUT_USER',
 ];
 export const constants = _.zipObject(_constants, _constants);
 
@@ -27,6 +29,23 @@ export const loginUserAction = (payload) => ({
   payload,
   type: constants.LOGIN_USER,
 });
+
+/**
+ * Acción para hacer logout de la sesión del usuario
+ */
+export const logoutUserAction = () => ({
+  type: constants.LOGOUT_USER
+});
+
+/**
+ * Acción que saca al usuario de la sesión y lo redirecciona al login
+ */
+export const logoutUser = () => {
+  return (dispatch) => {
+    dispatch(logoutUserAction());
+    dispatch(NavigationActions.navigate({ routeName: 'Auth' }))
+  }
+};
 
 /**
  * Acción de Thunk para crear el proceso de creación de un usuario.

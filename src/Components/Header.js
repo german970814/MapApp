@@ -1,19 +1,17 @@
 import React from 'react'
 import { Icon } from 'native-base'
-import { connect } from 'react-redux'
-import { NavigationActions } from 'react-navigation'
-import { MAIN_COLOR, ACCENT_COLOR } from '@Theme/constants'
-import { Image, TouchableOpacity, View, StyleSheet } from 'react-native'
+import { ACCENT_COLOR } from '@Theme/constants'
+import { TouchableOpacity, View, StyleSheet } from 'react-native'
 
 
 const Style = StyleSheet.create({
   container: {
-    height: 60,
-    // maxHeight: 80,
+    zIndex: 1,
+    height: 50,
     flexDirection: 'row',
     paddingHorizontal: 20,
-    backgroundColor: 'white',
-    justifyContent: 'space-around'
+    justifyContent: 'space-around',
+    backgroundColor: 'transparent',
   },
   menuContainer: {
     flex: 1,
@@ -33,26 +31,21 @@ const Style = StyleSheet.create({
   }
 });
 
-const HeaderComponent = ({ style, onOpenDrawer, dispatch, MenuComponent=null }) => {
-  return <View style={[Style.container, style]}>
+/**
+ * Componenete usado para renderizar el Header de la aplicación
+ * 
+ * @param {Object} param0 Las propiedades del componente
+ */
+const HeaderComponent = ({ onOpenDrawer }) => (
+  <View style={Style.container}>
     <View style={Style.menuContainer}>
-      <TouchableOpacity onPress={() => {
-        !!onOpenDrawer ? onOpenDrawer() : dispatch(NavigationActions.back());
-      }}>
-        <Icon style={{ color: MAIN_COLOR }} name={!!onOpenDrawer ? 'menuunfold' : 'arrowleft'} type="AntDesign" />
+      <TouchableOpacity onPress={onOpenDrawer}>
+        <Icon style={{ color: ACCENT_COLOR }} name="menuunfold" type="AntDesign" />
       </TouchableOpacity>
     </View>
-    <View style={Style.brandContainer}>
-      {/* <Image style={{
-        height: 50,
-        width: '100%',
-        resizeMode: 'center',
-      }} source={require('@Asset/images/brand.png')} /> */}
-    </View>
-    <View style={Style.optionsContainer}>
-      { !!MenuComponent && <MenuComponent /> }
-    </View>
+    <View style={Style.brandContainer} />
+    <View style={Style.optionsContainer} />
   </View>
-}
+);
 
-export default connect()(HeaderComponent);
+export default HeaderComponent;

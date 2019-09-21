@@ -1,7 +1,8 @@
 import _ from 'lodash'
 import API from '@Services/Api'
 import { connect } from 'react-redux'
-import { loading } from '@Actions/tmp';
+import Alert from '@Components/Alert'
+import { loading } from '@Actions/tmp'
 import { onScroll } from 'react-native-redash'
 import { scale, ACCENT_COLOR } from '@Theme/constants'
 import MainContainer from '@Components/Containers/Main'
@@ -68,6 +69,7 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
   const scroll = useRef(null);
   const [ routes, setRoutes ] = useState([]);
   const [ marker, setMarker ] = useState({});
+  const [ showMap, setShowMap ] = useState(false);
   const [ userLocation, setUserLocation ] = useState(null);
   const [ modalVisible, setModalVisible ] = useState(false);
   const [ region, setRegion ] = useState({
@@ -80,11 +82,20 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
   });
 
   useEffect(() => {
-    getCoordinatesFromCurrentLocation().then(({ latitude, longitude }) => {
-      !userLocation && setUserLocation({ latitude, longitude });
-      !userLocation && setRegion({ ...region, latitude, longitude });
-    })
-  }, [ !userLocation ]);
+    getCoordinatesFromCurrentLocation()
+      .then(({ latitude, longitude }) => {
+        !userLocation && setUserLocation({ latitude, longitude });
+        !userLocation && setRegion({ ...region, latitude, longitude });
+        setShowMap(true);
+      })
+      .catch(({ code }) => {
+        code === 'ACCESS_DENIED' && Alert.show({
+          type: 'error',
+          duration: 3000,
+          message: 'Por favor activa los servicios de ubicación'
+        });
+      });
+  }, [ ]);
 
   useEffect(() => {
     (scroll && scroll.current) && scroll.current.getNode().scrollTo({
@@ -113,82 +124,88 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
   });
 
   return <MainContainer>
-    <MapView
-      showsUserLocation
-      initialRegion={region}
-      showsPointsOfInterest={false}
-      showsMyLocationButton={false}
-      onRegionChangeComplete={setRegion}
-      style={{ ...StyleSheet.absoluteFillObject }}
-    >
-      {
-        addresses.map((address, index) => (
-          <Marker
-            key={index}
-            title={address.name}
-            onPress={() => {
-              setMarker(marker.id === address.id ? {} : address)
-            }}
-            coordinate={{ latitude: address.latitude, longitude: address.longitude }} />
-        ))
-      }
-      {
-        (!!routes.length && !!marker.id) && <Polyline
-          strokeWidth={4}
-          coordinates={routes}
-        />
-      }
-    </MapView>
-    <Animated.View
-      style={[Style.pinContainer, { opacity }]}
-    >
-      <AnimatedTouchableOpacity onPress={() => setMarker({})}>
-        <Image style={Style.pinImage} source={require('@Assets/images/pin.png')} />
-      </AnimatedTouchableOpacity>
-    </Animated.View>
-
-    <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: 20 }}>
-      <Animated.ScrollView
-        vertical
-        ref={scroll}
-        scrollEnabled={false}
-        decelerationRate="fast"
-        scrollEventThrottle={1}
-        onScroll={onScroll({ y })}
-        style={Style.scrollViewVertical}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ height: 200 }}
-      >
-        <View style={Style.CTAContainer}>
-          <TouchableOpacity activeOpacity={.8} style={Style.CTA} onPress={() => setModalVisible(true)}>
-            <Text style={Style.CTAText}>
-              Agregar nueva dirección
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={Style.CTAContainer}>
-          <TouchableOpacity
-            activeOpacity={.8}
-            style={Style.CTA}
-            onPress={() => {
-              if (!!routes.length) {
-                setMarker({});
-                setRoutes([]);
-              } else {
-                !!marker.id && getRoute({
-                  destination: `${marker.latitude},${marker.longitude}`,
-                  origin: `${userLocation.latitude},${userLocation.longitude}`,
-                }, setRoutes);
-              }
-            }}
+    {
+      showMap && (
+        <React.Fragment>
+          <MapView
+            showsUserLocation
+            initialRegion={region}
+            showsPointsOfInterest={false}
+            showsMyLocationButton={false}
+            onRegionChangeComplete={setRegion}
+            style={{ ...StyleSheet.absoluteFillObject }}
           >
-            <Text style={Style.CTAText}>
-              { !!routes.length ? 'Listo' : '¿Cómo llegar?' }
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.ScrollView>
-    </View>
+            {
+              addresses.map((address, index) => (
+                <Marker
+                  key={index}
+                  title={address.name}
+                  onPress={() => {
+                    setMarker(marker.id === address.id ? {} : address)
+                  }}
+                  coordinate={{ latitude: address.latitude, longitude: address.longitude }} />
+              ))
+            }
+            {
+              (!!routes.length && !!marker.id) && <Polyline
+                strokeWidth={4}
+                coordinates={routes}
+              />
+            }
+          </MapView>
+          <Animated.View
+            style={[Style.pinContainer, { opacity }]}
+          >
+            <AnimatedTouchableOpacity onPress={() => setMarker({})}>
+              <Image style={Style.pinImage} source={require('@Assets/images/pin.png')} />
+            </AnimatedTouchableOpacity>
+          </Animated.View>
+
+          <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: 20 }}>
+            <Animated.ScrollView
+              vertical
+              ref={scroll}
+              scrollEnabled={false}
+              decelerationRate="fast"
+              scrollEventThrottle={1}
+              onScroll={onScroll({ y })}
+              style={Style.scrollViewVertical}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ height: 200 }}
+            >
+              <View style={Style.CTAContainer}>
+                <TouchableOpacity activeOpacity={.8} style={Style.CTA} onPress={() => setModalVisible(true)}>
+                  <Text style={Style.CTAText}>
+                    Agregar nueva dirección
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View style={Style.CTAContainer}>
+                <TouchableOpacity
+                  activeOpacity={.8}
+                  style={Style.CTA}
+                  onPress={() => {
+                    if (!!routes.length) {
+                      setMarker({});
+                      setRoutes([]);
+                    } else {
+                      !!marker.id && getRoute({
+                        destination: `${marker.latitude},${marker.longitude}`,
+                        origin: `${userLocation.latitude},${userLocation.longitude}`,
+                      }, setRoutes);
+                    }
+                  }}
+                >
+                  <Text style={Style.CTAText}>
+                    { !!routes.length ? 'Listo' : '¿Cómo llegar?' }
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.ScrollView>
+          </View>
+        </React.Fragment>
+      )
+    }
     <ModalCreationAddress region={region} visible={modalVisible} onClose={() => setModalVisible(false)} />
   </MainContainer>
 }

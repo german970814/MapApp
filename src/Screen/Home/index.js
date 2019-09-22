@@ -8,8 +8,8 @@ import MainContainer from '@Components/Containers/Main'
 import ModalCreationAddress from './ModalCreationAddress'
 import Animated, { Easing } from 'react-native-reanimated'
 import React, { useState, useRef, useEffect } from 'react'
-import { Image, StyleSheet, View, Text } from 'react-native'
 import { scale, MAIN_COLOR, ACCENT_COLOR } from '@Theme/constants'
+import { Image, StyleSheet, View, Text, SafeAreaView } from 'react-native'
 import { Marker, Polyline, Animated as MapViewAnimated } from 'react-native-maps'
 import { getCoordinatesFromCurrentLocation, getDistanceBetweenTwoCoordinates } from '@Utils/location'
 
@@ -181,7 +181,7 @@ const HomeScreen = ({ loading, addresses, currentPosition, getRoute }) => {
         !userLocation && setRegion({ ...region, latitude, longitude });
         setShowMap(true);
       })
-      .catch(({ code }) => {
+      .catch((code) => {
         Alert.show({
           type: 'error',
           duration: 3000,
@@ -230,51 +230,53 @@ const HomeScreen = ({ loading, addresses, currentPosition, getRoute }) => {
     }
   }, [ index ]);
 
-  return <MainContainer onAddAddress={() => setModalVisible(true)}>
-    {
-      showMap && (
-        <React.Fragment>
-          <MapViewAnimated
-            ref={map}
-            showsUserLocation
-            initialRegion={region}
-            showsPointsOfInterest={false}
-            showsMyLocationButton={false}
-            onRegionChangeComplete={setRegion}
-            style={{ ...StyleSheet.absoluteFillObject }}
-          >
-            {
-              addresses.map((address, index) => (
-                <Marker
-                  key={index}
-                  title={address.name}
-                  onPress={() => setMarker(address)}
-                  coordinate={{ latitude: address.latitude, longitude: address.longitude }} />
-              ))
-            }
-            {
-              (!!routes.length && !!marker.id) && <Polyline strokeWidth={4} coordinates={routes} />
-            }
-          </MapViewAnimated>
-          <Animated.View style={[Style.pinContainer, { opacity }]}>
-            <Image style={Style.pinImage} source={require('@Assets/images/pin.png')} />
-          </Animated.View>
-          <ModalContainer onGetRoute={() => {
-            !!marker.id && getRoute({
-              destination: `${marker.latitude},${marker.longitude}`,
-              origin: `${userLocation.latitude},${userLocation.longitude}`,
-            }, setRoutes);
-          }} onSelectedAddress={([ index ]) => setIndex(index)} />
-          { loading && <View style={Style.loader}>
-            <Text style={Style.loaderText}>
-              Cargando...
-            </Text>
-          </View> }
-        </React.Fragment>
-      )
-    }
-    <ModalCreationAddress region={region} visible={modalVisible} onClose={() => setModalVisible(false)} />
-  </MainContainer>
+  return <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <MainContainer onAddAddress={() => setModalVisible(true)}>
+      {
+        showMap && (
+          <React.Fragment>
+            <MapViewAnimated
+              ref={map}
+              showsUserLocation
+              initialRegion={region}
+              showsPointsOfInterest={false}
+              showsMyLocationButton={false}
+              onRegionChangeComplete={setRegion}
+              style={{ ...StyleSheet.absoluteFillObject }}
+            >
+              {
+                addresses.map((address, index) => (
+                  <Marker
+                    key={index}
+                    title={address.name}
+                    onPress={() => setMarker(address)}
+                    coordinate={{ latitude: address.latitude, longitude: address.longitude }} />
+                ))
+              }
+              {
+                (!!routes.length && !!marker.id) && <Polyline strokeWidth={4} coordinates={routes} />
+              }
+            </MapViewAnimated>
+            <Animated.View style={[Style.pinContainer, { opacity }]}>
+              <Image style={Style.pinImage} source={require('@Assets/images/pin.png')} />
+            </Animated.View>
+            <ModalContainer onGetRoute={() => {
+              !!marker.id && getRoute({
+                destination: `${marker.latitude},${marker.longitude}`,
+                origin: `${userLocation.latitude},${userLocation.longitude}`,
+              }, setRoutes);
+            }} onSelectedAddress={([ index ]) => setIndex(index)} />
+            { loading && <View style={Style.loader}>
+              <Text style={Style.loaderText}>
+                Cargando...
+              </Text>
+            </View> }
+          </React.Fragment>
+        )
+      }
+      <ModalCreationAddress region={region} visible={modalVisible} onClose={() => setModalVisible(false)} />
+    </MainContainer>
+  </SafeAreaView>
 }
 
 /**

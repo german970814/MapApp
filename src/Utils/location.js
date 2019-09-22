@@ -32,7 +32,17 @@ export const getCoordinatesFromCurrentLocation = () => {
       }
     });
   }
-  return new Promise((resolve, reject) => reject({ code: 'PLATFORM_NOT_SUPPORTED' }))
+  return (async () => {
+    const response = {};
+    await Geolocation.requestAuthorization();
+    await Geolocation.getCurrentPosition((response, error) => {
+      response.error = error;
+      response.response = response
+      // return !!error ? error : response.coords;
+    });
+    return response
+  })();
+  // return new Promise((resolve, reject) => reject({ code: 'PLATFORM_NOT_SUPPORTED' }))
 }
 
 /**

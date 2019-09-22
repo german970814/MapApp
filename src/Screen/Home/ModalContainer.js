@@ -125,14 +125,14 @@ const ModalContainer = ({ addresses, user, onSelectedAddress, onGetRoute }) => {
     translationY,
   });
 
-  const translateY = withSpring({
+  const [ translateY ] = useState(withSpring({
     state,
     velocity: velocityY,
     value: translationY,
-    config: { damping: 10 },
+    config: { damping: 12 },
     offset: translationYOffset,
     snapPoints: [SNAP_TOP, SNAP_BOTTOM],
-  });
+  }));
 
   const interpolatedTranslationY = interpolate(translateY, {
     extrapolate: Extrapolate.CLAMP,

@@ -73,8 +73,6 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
   const [ userLocation, setUserLocation ] = useState(null);
   const [ modalVisible, setModalVisible ] = useState(false);
   const [ region, setRegion ] = useState({
-    // latitude: 6.217,
-    // longitude: -75.567,
     latitude: currentPosition.latitude,
     latitudeDelta: 0.007832986620123883,
     longitude: currentPosition.longitude,
@@ -240,10 +238,23 @@ const mapDispatchToProps = (dispatch) => ({
     return API.getRoutesFromGoogle({ origin, destination })
       .then(({ response, rawResponse }) => {
         dispatch(loading(false));
-        const routes = API.decode(response.routes[0].overview_polyline.points);
-        callback(routes);
+        if (!!response.routes.length) {
+          const routes = API.decode(response.routes[0].overview_polyline.points);
+          callback(routes);
+        } else {
+          Alert.show({
+            duration: 3000,
+            type: 'warning',
+            message: 'No se encontraron rutas'
+          });
+        }
       })
       .catch(() => {
+        Alert.show({
+          type: 'error',
+          duration: 3000,
+          message: 'Algo no salió bien'
+        });
         dispatch(loading(false))
       });
   }

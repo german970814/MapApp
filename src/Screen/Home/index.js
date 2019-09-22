@@ -134,8 +134,8 @@ var debouncedAnimation = null
  */
 const _debounceAnimateToRegion = (map, region) => {
   return _.debounce(() => {
-    (!!map && !!map.current) && map.current.getNode().animateToRegion(region);
-  }, 300);
+    (!!map && !!map.current) && map.current.getNode().animateToRegion(region, 100);
+  }, 500);
 }
 
 /**
@@ -158,6 +158,7 @@ const animateToRegion = (map, region) => {
  */
 const HomeScreen = ({ loading, addresses, currentPosition, getRoute }) => {
   const map = useRef(null);
+  const clock = new Clock();
   const opacity = new Value(1);
   const [ index, setIndex ] = useState(0);
   const [ marker, setMarker ] = useState({});
@@ -199,11 +200,11 @@ const HomeScreen = ({ loading, addresses, currentPosition, getRoute }) => {
         getDistanceBetweenTwoCoordinates(
           marker.latitude, marker.longitude, region.latitude, region.longitude
         ) > 100,
-        cond(neq(opacity, 1), set(opacity, runTiming(new Clock(), 0, 1)), []),
-        cond(neq(opacity, 0), set(opacity, runTiming(new Clock(), 1, 0), []))
+        cond(neq(opacity, 1), set(opacity, runTiming(clock, 0, 1)), []),
+        cond(neq(opacity, 0), set(opacity, runTiming(clock, 1, 0)), [])
       ),
       cond(
-        neq(opacity, 1), set(opacity, runTiming(new Clock(), 0, 1), [])
+        neq(opacity, 1), set(opacity, runTiming(clock, 0, 1), [])
       )
     )
   ]), [ region ]);
@@ -211,6 +212,7 @@ const HomeScreen = ({ loading, addresses, currentPosition, getRoute }) => {
   // useEffect para centrar el mapa en una posición específica
   useEffect(() => {
     if (index === 0) {
+      setMarker({});
       animateToRegion(map, {
         ...region, ...currentPosition
       });

@@ -90,6 +90,18 @@ const Style = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  noAddressContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noAddressText: {
+    color: '#2B2B2B',
+    fontSize: scale(18),
+    textAlign: 'center',
+    fontFamily: 'Poopins-SemiBold'
   }
 });
 
@@ -139,6 +151,13 @@ const ModalContainer = ({ addresses, user, onSelectedAddress, onGetRoute }) => {
     outputRange: [0, 1, 1]
   });
 
+  Animated.useCode(
+    Animated.block([
+      call([index], onSelectedAddress)
+    ]),
+    [index]
+  );
+
   return <Animated.View
     style={[Style.container, {
       transform: [
@@ -146,9 +165,6 @@ const ModalContainer = ({ addresses, user, onSelectedAddress, onGetRoute }) => {
       ]
     }]}
   >
-    <Animated.Code>
-      { () => call([index], onSelectedAddress) }
-    </Animated.Code>
     <Animated.View style={[Style.imageContainer, { opacity }]}>
       <Image style={Style.image} source={require('@Assets/images/user.png')} />
     </Animated.View>
@@ -156,31 +172,44 @@ const ModalContainer = ({ addresses, user, onSelectedAddress, onGetRoute }) => {
       { `Hola ${_.capitalize(user.name)}!` }
     </Text>
     <Animated.View style={Style.addressContainer}>
-      <AddressContainer x={x} />
-      <Animated.ScrollView
-        horizontal
-        style={Style.scroll}
-        decelerationRate="fast"
-        scrollEventThrottle={1}
-        onScroll={onScroll({ x })}
-        snapToInterval={ADDRESS_WIDTH}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ width: (ADDRESS_OFFSET * 2) + ((ADDRESS_WIDTH) * (addresses.length + 1)) }}
-      />
+      {
+        !addresses.length ?
+          (
+            <View style={Style.noAddressContainer}>
+              <Text style={Style.noAddressText}>
+                No tienes direcciones agregadas, por favor agrega una dirigiendote al menú
+              </Text>
+            </View>
+          ) : (
+            <React.Fragment>
+              <AddressContainer x={x} />
+              <Animated.ScrollView
+                horizontal
+                style={Style.scroll}
+                decelerationRate="fast"
+                scrollEventThrottle={500}
+                onScroll={onScroll({ x })}
+                snapToInterval={ADDRESS_WIDTH}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ width: (ADDRESS_OFFSET * 2) + ((ADDRESS_WIDTH) * (addresses.length + 1)) }}
+              />
+            </React.Fragment>
+          )
+      }
     </Animated.View>
-    <Animated.View style={[Style.CTAContainer, { opacity: ctaOpacity }]}>
+    { !!addresses.length && <Animated.View style={[Style.CTAContainer, { opacity: ctaOpacity }]}>
       <TouchableOpacity onPress={onGetRoute} activeOpacity={.8} style={Style.CTA}>
         <Text style={Style.CTAText}>
           ¿Cómo llegar?
         </Text>
       </TouchableOpacity>
-    </Animated.View>
+    </Animated.View> }
     <PanGestureHandler maxPointers={1} { ...gestureHandler }>
       <Animated.View style={{
         top: 0,
         left: 0,
         right: 0,
-        height: 70,
+        height: scale(90),
         position: 'absolute',
         borderTopLeftRadius: 40,
         borderTopRightRadius: 40,

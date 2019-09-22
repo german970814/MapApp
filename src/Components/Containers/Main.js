@@ -10,14 +10,14 @@ import SidebarComponent from '@Components/Sidebar';
  * 
  * @param {Object} props Las propiedades del componente
  */
-const MainContainer = ({ children }) => {
+const MainContainer = ({ children, onAddAddress }) => {
   const [ visible, setVisibility ] = useState(false);
 
   return <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, .2)' }}>
     <Drawer
       style={{  }}
       visible={visible}
-      contentDrawer={(<SidebarComponent />)}
+      contentDrawer={(<SidebarComponent onAddAddress={onAddAddress} />)}
       onClose={() => { setVisibility(false) }}
     >
       <View bounces={false} style={{ flex: 1 }}>

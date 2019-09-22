@@ -2,11 +2,8 @@ import _ from 'lodash';
 import { constants } from '@Actions/address';
 
 const initialState = {
+  data: [],
   currentPosition: { latitude: 10.9815841, longitude: -74.8026437 },
-  data: [
-    { id: 1, name: 'Casa', latitude: 6.2392591, longitude: -75.6091583 },
-    { id: 2, name: 'Novia', latitude: 6.2515028, longitude: -75.5891597 },
-  ],
 }
 
 /**

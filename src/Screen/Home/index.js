@@ -3,17 +3,65 @@ import API from '@Services/Api'
 import { connect } from 'react-redux'
 import Alert from '@Components/Alert'
 import { loading } from '@Actions/tmp'
-import { onScroll } from 'react-native-redash'
-import { scale, ACCENT_COLOR } from '@Theme/constants'
+import ModalContainer from './ModalContainer'
 import MainContainer from '@Components/Containers/Main'
 import ModalCreationAddress from './ModalCreationAddress'
 import Animated, { Easing } from 'react-native-reanimated'
 import React, { useState, useRef, useEffect } from 'react'
-import MapView, { Marker, Polyline } from 'react-native-maps'
-import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native'
+import { Image, StyleSheet, View, Text } from 'react-native'
+import { scale, MAIN_COLOR, ACCENT_COLOR } from '@Theme/constants'
+import { Marker, Polyline, Animated as MapViewAnimated } from 'react-native-maps'
 import { getCoordinatesFromCurrentLocation, getDistanceBetweenTwoCoordinates } from '@Utils/location'
 
-const { Value, interpolate, Extrapolate } = Animated;
+const {
+  set,
+  neq,
+  cond,
+  Value,
+  Clock,
+  block,
+  timing,
+  useCode,
+  stopClock,
+  startClock,
+  clockRunning,
+} = Animated;
+
+/**
+ * Función para crear la animación de timing
+ * 
+ * @param {Animated.Clock} clock El reloj de la animación
+ * @param {Number} value El valor desde donde empieza la animación
+ * @param {Number} dest El valor donde debe terminar la animación
+ */
+const runTiming = (clock, value, dest) => {
+  const state = {
+    time: new Value(0),
+    finished: new Value(0),
+    position: new Value(0),
+    frameTime: new Value(0),
+  };
+
+  const config = {
+    duration: 100,
+    toValue: new Value(0),
+    easing: Easing.inOut(Easing.ease),
+  };
+
+  return block([
+    cond(clockRunning(clock), 0, [
+      set(state.finished, 0),
+      set(state.time, 0),
+      set(state.position, value),
+      set(state.frameTime, 0),
+      set(config.toValue, dest),
+      startClock(clock),
+    ]),
+    timing(clock, state, config),
+    cond(state.finished, stopClock(clock)),
+    state.position
+  ]);
+}
 
 const Style = StyleSheet.create({
   pinContainer: {
@@ -54,21 +102,66 @@ const Style = StyleSheet.create({
     fontSize: scale(18),
     textAlign: 'center',
     fontFamily: 'Poopins-SemiBold'
+  },
+  loader: {
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: .6,
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: MAIN_COLOR
+  },
+  loaderText: {
+    color: '#2B2B2B',
+    fontSize: scale(18),
+    fontFamily: 'Poppins-SemiBold'
   }
 });
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
+
+// Variable incicial
+var debouncedAnimation = null
+
+/**
+ * Función que retorna una función de _.debounce, con el fin de cancelar
+ * animaciones al mapa y evitar que el mapa se mueva cuando no se quiere que se mueva
+ * 
+ * @param {React.Node} map El nodo del componente mapa renderizado
+ * @param {Object} region El objeto que contiene la region donde se animará el mapa
+ */
+const _debounceAnimateToRegion = (map, region) => {
+  return _.debounce(() => {
+    (!!map && !!map.current) && map.current.getNode().animateToRegion(region);
+  }, 300);
+}
+
+/**
+ * Función que valida si hay alguna otra función de animación en curso, de ser
+ * así la cancela, y de lo contrario crea una nueva y returna su resultado
+ * 
+ * @param {React.Node} map El nodo del componente mapa renderizado
+ * @param {Object} region El objeto que contiene la region donde se animará el mapa
+ */
+const animateToRegion = (map, region) => {
+  !!debouncedAnimation && debouncedAnimation.cancel();
+  debouncedAnimation = _debounceAnimateToRegion(map, region);
+  return debouncedAnimation();
+}
 
 /**
  * Componente que se encarga de renderizar el mapa de la aplicación
  * 
  * @param {Object} param0 Las propiedades del componente
  */
-const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
-  const y = new Value(0);
-  const scroll = useRef(null);
-  const [ routes, setRoutes ] = useState([]);
+const HomeScreen = ({ loading, addresses, currentPosition, getRoute }) => {
+  const map = useRef(null);
+  const opacity = new Value(1);
+  const [ index, setIndex ] = useState(0);
   const [ marker, setMarker ] = useState({});
+  const [ routes, setRoutes ] = useState([]);
   const [ showMap, setShowMap ] = useState(false);
   const [ userLocation, setUserLocation ] = useState(null);
   const [ modalVisible, setModalVisible ] = useState(false);
@@ -79,6 +172,7 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
     longitudeDelta: 0.004916153848171234,
   });
 
+  // useEffect que se ejecuta cunado se inicia la aplicación y obtiene la ubicación del usuario
   useEffect(() => {
     getCoordinatesFromCurrentLocation()
       .then(({ latitude, longitude }) => {
@@ -87,45 +181,59 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
         setShowMap(true);
       })
       .catch(({ code }) => {
-        code === 'ACCESS_DENIED' && Alert.show({
+        Alert.show({
           type: 'error',
           duration: 3000,
-          message: 'Por favor activa los servicios de ubicación'
+          message: code !== 'ACCESS_DENIED' ?
+            'Ha ocurrido un error inesperado' :
+            'Por favor activa los servicios de ubicación'
         });
       });
   }, [ ]);
 
-  useEffect(() => {
-    (scroll && scroll.current) && scroll.current.getNode().scrollTo({
-      y: !marker.id ? 0 : 100
-    });
-  }, [!marker.id]);
+  // Animación para el pin central
+  useCode(block([
+    cond(
+      !!marker.id,
+      cond(
+        getDistanceBetweenTwoCoordinates(
+          marker.latitude, marker.longitude, region.latitude, region.longitude
+        ) > 100,
+        cond(neq(opacity, 1), set(opacity, runTiming(new Clock(), 0, 1)), []),
+        cond(neq(opacity, 0), set(opacity, runTiming(new Clock(), 1, 0), []))
+      ),
+      cond(
+        neq(opacity, 1), set(opacity, runTiming(new Clock(), 0, 1), [])
+      )
+    )
+  ]), [ region ]);
 
+  // useEffect para centrar el mapa en una posición específica
   useEffect(() => {
-    if (!!marker.id && !routes.length) {
-      const userDistance = getDistanceBetweenTwoCoordinates(
-        marker.latitude, marker.longitude, region.latitude, region.longitude
-      );
-      if (userDistance > 300) {
-        (scroll && scroll.current) && scroll.current.getNode().scrollTo({
-          y: 0
+    if (index === 0) {
+      animateToRegion(map, {
+        ...region, ...currentPosition
+      });
+    } else {
+      const address = addresses[index - 1];
+      setMarker(address);
+
+      if (!marker.id || address.id !== marker.id) {
+        animateToRegion(map, {
+          ...region,
+          latitude: address.latitude,
+          longitude: address.longitude,
         });
-        setMarker({});
       }
     }
-  }, [ region ])
+  }, [ index ]);
 
-  const opacity = interpolate(y, {
-    inputRange: [0, 100],
-    outputRange: [1, 0],
-    extrapolate: Extrapolate.CLAMP
-  });
-
-  return <MainContainer>
+  return <MainContainer onAddAddress={() => setModalVisible(true)}>
     {
       showMap && (
         <React.Fragment>
-          <MapView
+          <MapViewAnimated
+            ref={map}
             showsUserLocation
             initialRegion={region}
             showsPointsOfInterest={false}
@@ -138,69 +246,28 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
                 <Marker
                   key={index}
                   title={address.name}
-                  onPress={() => {
-                    setMarker(marker.id === address.id ? {} : address)
-                  }}
+                  onPress={() => setMarker(address)}
                   coordinate={{ latitude: address.latitude, longitude: address.longitude }} />
               ))
             }
             {
-              (!!routes.length && !!marker.id) && <Polyline
-                strokeWidth={4}
-                coordinates={routes}
-              />
+              (!!routes.length && !!marker.id) && <Polyline strokeWidth={4} coordinates={routes} />
             }
-          </MapView>
-          <Animated.View
-            style={[Style.pinContainer, { opacity }]}
-          >
-            <AnimatedTouchableOpacity onPress={() => setMarker({})}>
-              <Image style={Style.pinImage} source={require('@Assets/images/pin.png')} />
-            </AnimatedTouchableOpacity>
+          </MapViewAnimated>
+          <Animated.View style={[Style.pinContainer, { opacity }]}>
+            <Image style={Style.pinImage} source={require('@Assets/images/pin.png')} />
           </Animated.View>
-
-          <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: 20 }}>
-            <Animated.ScrollView
-              vertical
-              ref={scroll}
-              scrollEnabled={false}
-              decelerationRate="fast"
-              scrollEventThrottle={1}
-              onScroll={onScroll({ y })}
-              style={Style.scrollViewVertical}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ height: 200 }}
-            >
-              <View style={Style.CTAContainer}>
-                <TouchableOpacity activeOpacity={.8} style={Style.CTA} onPress={() => setModalVisible(true)}>
-                  <Text style={Style.CTAText}>
-                    Agregar nueva dirección
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={Style.CTAContainer}>
-                <TouchableOpacity
-                  activeOpacity={.8}
-                  style={Style.CTA}
-                  onPress={() => {
-                    if (!!routes.length) {
-                      setMarker({});
-                      setRoutes([]);
-                    } else {
-                      !!marker.id && getRoute({
-                        destination: `${marker.latitude},${marker.longitude}`,
-                        origin: `${userLocation.latitude},${userLocation.longitude}`,
-                      }, setRoutes);
-                    }
-                  }}
-                >
-                  <Text style={Style.CTAText}>
-                    { !!routes.length ? 'Listo' : '¿Cómo llegar?' }
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </Animated.ScrollView>
-          </View>
+          <ModalContainer onGetRoute={() => {
+            !!marker.id && getRoute({
+              destination: `${marker.latitude},${marker.longitude}`,
+              origin: `${userLocation.latitude},${userLocation.longitude}`,
+            }, setRoutes);
+          }} onSelectedAddress={([ index ]) => setIndex(index)} />
+          { loading && <View style={Style.loader}>
+            <Text style={Style.loaderText}>
+              Cargando...
+            </Text>
+          </View> }
         </React.Fragment>
       )
     }
@@ -215,6 +282,7 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
  * @param {Object} state El estado global de Redux
  */
 const mapStateToProps = (state) => ({
+  loading: state.tmp.loading,
   user: state.user.loggedUser,
   currentPosition: state.address.currentPosition,
   addresses: _.filter(state.address.data, { userId: state.user.loggedUser.id }),

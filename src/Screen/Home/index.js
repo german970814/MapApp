@@ -4,13 +4,13 @@ import { connect } from 'react-redux'
 import Alert from '@Components/Alert'
 import { loading } from '@Actions/tmp'
 import { onScroll } from 'react-native-redash'
+import Animated from 'react-native-reanimated'
 import { scale, ACCENT_COLOR } from '@Theme/constants'
 import MainContainer from '@Components/Containers/Main'
 import ModalCreationAddress from './ModalCreationAddress'
-import Animated, { Easing } from 'react-native-reanimated'
 import React, { useState, useRef, useEffect } from 'react'
 import MapView, { Marker, Polyline } from 'react-native-maps'
-import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native'
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
 import { getCoordinatesFromCurrentLocation, getDistanceBetweenTwoCoordinates } from '@Utils/location'
 
 const { Value, interpolate, Extrapolate } = Animated;
@@ -34,7 +34,6 @@ const Style = StyleSheet.create({
     bottom: 10,
     height: 100,
     position: 'absolute',
-    // backgroundColor: 'rgba(200, 120, 400, .4)'
   },
   CTAContainer: {
     flex: 1,
@@ -43,7 +42,6 @@ const Style = StyleSheet.create({
     justifyContent: 'center',
   },
   CTA: {
-    // marginBottom: 20,
     borderRadius: 15,
     paddingVertical: 15,
     paddingHorizontal: 60,
@@ -56,7 +54,6 @@ const Style = StyleSheet.create({
     fontFamily: 'Poopins-SemiBold'
   }
 });
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 
 /**
@@ -87,10 +84,12 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
         setShowMap(true);
       })
       .catch(({ code }) => {
-        code === 'ACCESS_DENIED' && Alert.show({
+        Alert.show({
           type: 'error',
           duration: 3000,
-          message: 'Por favor activa los servicios de ubicación'
+          message: code !== 'ACCESS_DENIED' ?
+            'Ha ocurrido un error inesperado' :
+            'Por favor activa los servicios de ubicación'
         });
       });
   }, [ ]);
@@ -121,7 +120,7 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
     extrapolate: Extrapolate.CLAMP
   });
 
-  return <MainContainer>
+  return <MainContainer onAddAddress={() => setModalVisible(true)}>
     {
       showMap && (
         <React.Fragment>
@@ -138,9 +137,7 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
                 <Marker
                   key={index}
                   title={address.name}
-                  onPress={() => {
-                    setMarker(marker.id === address.id ? {} : address)
-                  }}
+                  onPress={() => setMarker(address)}
                   coordinate={{ latitude: address.latitude, longitude: address.longitude }} />
               ))
             }
@@ -151,12 +148,8 @@ const HomeScreen = ({ addresses, currentPosition, getRoute }) => {
               />
             }
           </MapView>
-          <Animated.View
-            style={[Style.pinContainer, { opacity }]}
-          >
-            <AnimatedTouchableOpacity onPress={() => setMarker({})}>
-              <Image style={Style.pinImage} source={require('@Assets/images/pin.png')} />
-            </AnimatedTouchableOpacity>
+          <Animated.View style={[Style.pinContainer, { opacity }]}>
+            <Image style={Style.pinImage} source={require('@Assets/images/pin.png')} />
           </Animated.View>
 
           <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: 20 }}>

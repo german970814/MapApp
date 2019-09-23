@@ -9,14 +9,3 @@ export const store = createStore(
 );
 
 export const persistor = persistStore(store);
-
-// observable
-// let currentValue = (store.getState()).session.token;
-// store.subscribe(() => {
-//   let previousValue = currentValue
-//   currentValue = (store.getState()).session.token;
-
-//   if (previousValue !== currentValue) {
-//     API.setApiToken(currentValue);
-//   }
-// });

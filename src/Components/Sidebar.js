@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
+import { Icon } from 'native-base'
 import { connect } from 'react-redux'
 import { logoutUser } from '@Actions/user'
 import { scale, ACCENT_COLOR } from '@Theme/constants'
@@ -54,6 +55,23 @@ const Style = StyleSheet.create({
     color: '#D1D1D1',
     textAlign: 'center',
     fontFamily: 'Poppins-SemiBold'
+  },
+  addAddressContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  addAddressIcon: {
+    fontSize: scale(50),
+    color: ACCENT_COLOR,
+    textAlign: 'center',
+  },
+  addAddressText: {
+    fontSize: scale(18),
+    color: ACCENT_COLOR,
+    textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold'
   }
 });
 
@@ -62,7 +80,7 @@ const Style = StyleSheet.create({
  * 
  * @param {Object} param0 Las propiedades del componente
  */
-const SidebarComponent = ({ user, logoutUser }) => (
+const SidebarComponent = ({ user, logoutUser, onAddAddress }) => (
   <View style={Style.container}>
     <View style={Style.userCardContainer}>
       <View style={Style.imageContainer}>
@@ -74,6 +92,12 @@ const SidebarComponent = ({ user, logoutUser }) => (
         { `Hola ${_.capitalize(user.name)}!` }
       </Text>
     </View>
+    <TouchableOpacity activeOpacity={.9} onPress={onAddAddress} style={Style.addAddressContainer}>
+      <Icon style={Style.addAddressIcon} name="address" type="Entypo" />
+      <Text style={Style.addAddressText}>
+        Agregar dirección en este punto
+      </Text>
+    </TouchableOpacity>
     <View style={Style.logoutContainer}>
       <TouchableOpacity onPress={logoutUser} activeOpacity={.9} style={Style.logoutButton}>
         <Text style={Style.logoutText}>

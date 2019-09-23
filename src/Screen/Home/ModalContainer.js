@@ -155,16 +155,10 @@ const ModalContainer = ({ addresses, user, onSelectedAddress, onGetRoute }) => {
     Animated.block([
       call([index], onSelectedAddress)
     ]),
-    [index]
+    [ index ]
   );
 
-  return <Animated.View
-    style={[Style.container, {
-      transform: [
-        { translateY: interpolatedTranslationY }
-      ]
-    }]}
-  >
+  return <Animated.View style={[Style.container, { transform: [ { translateY: interpolatedTranslationY } ] }]}>
     <Animated.View style={[Style.imageContainer, { opacity }]}>
       <Image style={Style.image} source={require('@Assets/images/user.png')} />
     </Animated.View>

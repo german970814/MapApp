@@ -3,65 +3,18 @@ import API from '@Services/Api'
 import { connect } from 'react-redux'
 import Alert from '@Components/Alert'
 import { loading } from '@Actions/tmp'
+import { runTiming } from '@Utils/animation'
 import ModalContainer from './ModalContainer'
+import Animated from 'react-native-reanimated'
 import MainContainer from '@Components/Containers/Main'
 import ModalCreationAddress from './ModalCreationAddress'
-import Animated, { Easing } from 'react-native-reanimated'
 import React, { useState, useRef, useEffect } from 'react'
 import { scale, MAIN_COLOR, ACCENT_COLOR } from '@Theme/constants'
 import { Image, StyleSheet, View, Text, SafeAreaView } from 'react-native'
-import { Marker, Polyline, Animated as MapViewAnimated } from 'react-native-maps'
+import { Callout, Marker, Polyline, Animated as MapViewAnimated } from 'react-native-maps'
 import { getCoordinatesFromCurrentLocation, getDistanceBetweenTwoCoordinates } from '@Utils/location'
 
-const {
-  set,
-  neq,
-  cond,
-  Value,
-  Clock,
-  block,
-  timing,
-  useCode,
-  stopClock,
-  startClock,
-  clockRunning,
-} = Animated;
-
-/**
- * Función para crear la animación de timing
- * 
- * @param {Animated.Clock} clock El reloj de la animación
- * @param {Number} value El valor desde donde empieza la animación
- * @param {Number} dest El valor donde debe terminar la animación
- */
-const runTiming = (clock, value, dest) => {
-  const state = {
-    time: new Value(0),
-    finished: new Value(0),
-    position: new Value(0),
-    frameTime: new Value(0),
-  };
-
-  const config = {
-    duration: 100,
-    toValue: new Value(0),
-    easing: Easing.inOut(Easing.ease),
-  };
-
-  return block([
-    cond(clockRunning(clock), 0, [
-      set(state.finished, 0),
-      set(state.time, 0),
-      set(state.position, value),
-      set(state.frameTime, 0),
-      set(config.toValue, dest),
-      startClock(clock),
-    ]),
-    timing(clock, state, config),
-    cond(state.finished, stopClock(clock)),
-    state.position
-  ]);
-}
+const { set, neq, cond, Value, Clock, block, useCode } = Animated;
 
 const Style = StyleSheet.create({
   pinContainer: {
@@ -82,7 +35,6 @@ const Style = StyleSheet.create({
     bottom: 10,
     height: 100,
     position: 'absolute',
-    // backgroundColor: 'rgba(200, 120, 400, .4)'
   },
   CTAContainer: {
     flex: 1,
@@ -91,7 +43,6 @@ const Style = StyleSheet.create({
     justifyContent: 'center',
   },
   CTA: {
-    // marginBottom: 20,
     borderRadius: 15,
     paddingVertical: 15,
     paddingHorizontal: 60,
@@ -150,6 +101,35 @@ const animateToRegion = (map, region) => {
   debouncedAnimation = _debounceAnimateToRegion(map, region);
   return debouncedAnimation();
 }
+
+/**
+ * Callaout para los markers del mapa
+ * 
+ * @param {Object} param0 Las propiedades del componente
+ */
+const CustomCallout = ({ title }) => (
+  <View style={{
+    padding: 20,
+    backgroundColor: '#FFF',
+  }}>
+    <Text style={{
+      fontSize: 13,
+      color: '#2B2B2B',
+      textAlign: 'center',
+      fontFamily: 'Poppins-Bold',
+    }}>
+      { title }
+    </Text>
+    <Text style={{
+      fontSize: 11,
+      color: '#2D2D2D',
+      textAlign: 'center',
+      fontFamily: 'Poppins-Regular',
+    }}>
+      (Presiona aquí para mostrar la ruta)
+    </Text>
+  </View>
+);
 
 /**
  * Componente que se encarga de renderizar el mapa de la aplicación
@@ -250,7 +230,18 @@ const HomeScreen = ({ loading, addresses, currentPosition, getRoute }) => {
                     key={index}
                     title={address.name}
                     onPress={() => setMarker(address)}
-                    coordinate={{ latitude: address.latitude, longitude: address.longitude }} />
+                    onCalloutPress={() => {
+                      !!marker.id && getRoute({
+                        destination: `${marker.latitude},${marker.longitude}`,
+                        origin: `${userLocation.latitude},${userLocation.longitude}`,
+                      }, setRoutes);
+                    }}
+                    coordinate={{ latitude: address.latitude, longitude: address.longitude }}
+                  >
+                    <Callout>
+                      <CustomCallout title={address.name} />
+                    </Callout>
+                  </Marker>
                 ))
               }
               {

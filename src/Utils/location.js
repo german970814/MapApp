@@ -37,8 +37,7 @@ export const getCoordinatesFromCurrentLocation = () => {
     await Geolocation.requestAuthorization();
     await Geolocation.getCurrentPosition((response, error) => {
       response.error = error;
-      response.response = response
-      // return !!error ? error : response.coords;
+      response.response = response;
     });
     return response
   })();
